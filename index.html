@@ -13,12 +13,12 @@
 
     header {
       background: #5C1A2E;
-      padding: 16px 24px;
+      padding: 12px 24px;
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
-    header img { height: 40px; }
+    header img { height: 36px; }
     .settings-btn {
       background: none;
       border: none;
@@ -37,11 +37,10 @@
       border-radius: 16px;
       border: 1px solid #7B2D42;
     }
-    #auth-container h2 {
-      color: #FFD580;
-      font-size: 22px;
-      margin-bottom: 24px;
-      text-align: center;
+    .auth-logo {
+      display: block;
+      margin: 0 auto 28px auto;
+      height: 60px;
     }
     label {
       display: block;
@@ -140,13 +139,13 @@
 <body>
 
 <header>
-  <img src="logo.png" alt="WeekPeak" onerror="this.style.display='none'" />
+  <img src="logo.png" alt="WeekPeak" />
   <button class="settings-btn" onclick="openSettings()" title="Settings">⚙️</button>
 </header>
 
 <!-- Registration Screen -->
 <div id="auth-container">
-  <h2>✈️ Welcome to WeekPeak</h2>
+  <img src="logo.png" alt="WeekPeak" class="auth-logo" />
 
   <label>Full Name</label>
   <input type="text" id="name" placeholder="Your name" />
@@ -184,12 +183,12 @@
   <div id="settings-map" style="height:220px; border-radius:8px; margin-bottom:8px; border:1px solid #7B2D42;"></div>
   <p class="map-note">📍 Type your city or click on the map</p>
   <button onclick="saveSettings()">Save Changes</button>
-  <button onclick="closeSettings()" style="background:#3a1525; margin-top:10px;">Cancel</button>
+  <button onclick="logout()" style="background:#3a1525; margin-top:10px;">Logout</button>
+  <button onclick="closeSettings()" style="background:#2a0f1a; margin-top:10px; border: 1px solid #7B2D42;">Cancel</button>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  // Main map
   const map = L.map('map').setView([48.8566, 2.3522], 4);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
   let userLat = null, userLng = null, marker = null;
@@ -218,7 +217,6 @@
     }, 600);
   }
 
-  // Settings map
   let settingsMap = null, settingsMarker = null, settingsLat = null, settingsLng = null;
 
   function openSettings() {
@@ -272,18 +270,28 @@
     document.getElementById('app-container').style.display = 'block';
   }
 
+  function logout() {
+    const password = prompt('Enter your password to logout:');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    if (password === user.password) {
+      localStorage.removeItem('user');
+      location.reload();
+    } else {
+      alert('Incorrect password');
+    }
+  }
+
   function handleAuth() {
     const name = document.getElementById('name').value.trim();
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value.trim();
     if (!name || !email || !password) { alert('Please fill in all required fields'); return; }
     if (!userLat || !userLng) { alert('Please set your location on the map'); return; }
-    localStorage.setItem('user', JSON.stringify({ name, email, lat: userLat, lng: userLng }));
+    localStorage.setItem('user', JSON.stringify({ name, email, lat: userLat, lng: userLng, password }));
     document.getElementById('auth-container').style.display = 'none';
     document.getElementById('app-container').style.display = 'block';
   }
 
-  // Check if already logged in
   window.onload = function() {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     if (user.name && user.lat) {
