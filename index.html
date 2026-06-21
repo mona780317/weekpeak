@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WeekPeak – Your Weekend Scout</title>
+  <link rel="manifest" href="manifest.json" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: #1a0a10; color: #fff; min-height: 100vh; }
+
+    /* Header */
+    header {
+      background: #5C1A2E;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    header img { height: 40px; }
+
+    /* Auth Container */
+    #auth-container {
+      max-width: 420px;
+      margin: 60px auto;
+      padding: 32px;
+      background: #2a0f1a;
+      border-radius: 16px;
+      border: 1px solid #7B2D42;
+    }
+    #auth-container h2 {
+      color: #FFD580;
+      font-size: 22px;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+    input {
+      width: 100%;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      border-radius: 8px;
+      border: 1px solid #7B2D42;
+      background: #1a0a10;
+      color: #fff;
+      font-size: 15px;
+    }
+    input::placeholder { color: #aaa; }
+    button {
+      width: 100%;
+      padding: 14px;
+      background: #7B2D42;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button:hover { background: #9a3a55; }
+
+    /* Main App */
+    #app-container { display: none; padding: 24px; max-width: 800px; margin: 0 auto; }
+    #app-container h2 { color: #FFD580; margin-bottom: 20px; }
+
+    /* Flight Cards */
+    .flight-card {
+      background: #F5E6EB;
+      color: #1a0a10;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .flight-card .city { font-size: 20px; font-weight: 700; }
+    .flight-card .date { color: #5C1A2E; margin: 4px 0; }
+    .flight-card .price { color: #7B2D42; font-size: 22px; font-weight: 700; }
+    .flight-card .price.cheapest { color: #2d7a3a; }
+    .badge {
+      display: inline-block;
+      background: #EDD0D9;
+      color: #5C1A2E;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .book-btn {
+      width: auto;
+      padding: 10px 20px;
+      margin-top: 12px;
+      font-size: 14px;
+    }
+
+    #loading { text-align: center; padding: 40px; color: #FFD580; display: none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <img src="logo.png" alt="WeekPeak" />
+</header>
+
+<!-- شاشة تسجيل الدخول -->
+<div id="auth-container">
+  <h2>✈️ أهلاً بيك في WeekPeak</h2>
+  <input type="text" id="name" placeholder="اسمك" />
+  <input type="email" id="email" placeholder="إيميلك" />
+  <input type="text" id="telegram" placeholder="يوزر تليجرام (@username)" />
+  <input type="password" id="password" placeholder="كلمة السر" />
+  <div id="map" style="height:200px; border-radius:8px; margin-bottom:16px; background:#3a1525; display:flex; align-items:center; justify-content:center; color:#aaa;">
+    🗺️ هنا هتحدد موقعك على الخريطة
+  </div>
+  <button onclick="handleAuth()">دخول / تسجيل</button>
+</div>
+
+<!-- الشاشة الرئيسية -->
+<div id="app-container">
+  <h2>🏖️ عروض عطلة الأسبوع</h2>
+  <div id="loading">⏳ بندور على أرخص العروض...</div>
+  <div id="flights-list"></div>
+</div>
+
+<script>
+function handleAuth() {
+  const name = document.getElementById('name').value;
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+
+  if (!name || !email || !password) {
+    alert('من فضلك اكمل كل البيانات');
+    return;
+  }
+
+  // حفظ البيانات
+  localStorage.setItem('user', JSON.stringify({ name, email }));
+
+  // إظهار التطبيق
+  document.getElementById('auth-container').style.display = 'none';
+  document.getElementById('app-container').style.display = 'block';
+}
+</script>
+
+</body>
+</html>
