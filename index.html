@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>WeekPeak – Your Weekend Scout</title>
   <link rel="manifest" href="manifest.json" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Inter', sans-serif; background: #1a0a10; color: #fff; min-height: 100vh; }
 
-    /* Header */
     header {
       background: #5C1A2E;
       padding: 16px 24px;
@@ -19,11 +19,19 @@
       justify-content: space-between;
     }
     header img { height: 40px; }
+    .settings-btn {
+      background: none;
+      border: none;
+      color: #FFD580;
+      font-size: 22px;
+      cursor: pointer;
+      width: auto;
+      padding: 0;
+    }
 
-    /* Auth Container */
     #auth-container {
       max-width: 420px;
-      margin: 60px auto;
+      margin: 40px auto;
       padding: 32px;
       background: #2a0f1a;
       border-radius: 16px;
@@ -34,6 +42,19 @@
       font-size: 22px;
       margin-bottom: 24px;
       text-align: center;
+    }
+    label {
+      display: block;
+      color: #EDD0D9;
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+    .note {
+      color: #aaa;
+      font-size: 11px;
+      margin-top: -10px;
+      margin-bottom: 14px;
+      line-height: 1.5;
     }
     input {
       width: 100%;
@@ -59,11 +80,32 @@
     }
     button:hover { background: #9a3a55; }
 
-    /* Main App */
+    #map {
+      height: 220px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      border: 1px solid #7B2D42;
+    }
+    .map-note {
+      color: #aaa;
+      font-size: 11px;
+      margin-bottom: 16px;
+    }
+
     #app-container { display: none; padding: 24px; max-width: 800px; margin: 0 auto; }
     #app-container h2 { color: #FFD580; margin-bottom: 20px; }
 
-    /* Flight Cards */
+    #settings-panel {
+      display: none;
+      max-width: 420px;
+      margin: 40px auto;
+      padding: 32px;
+      background: #2a0f1a;
+      border-radius: 16px;
+      border: 1px solid #7B2D42;
+    }
+    #settings-panel h2 { color: #FFD580; margin-bottom: 24px; text-align: center; }
+
     .flight-card {
       background: #F5E6EB;
       color: #1a0a10;
@@ -98,47 +140,157 @@
 <body>
 
 <header>
-  <img src="logo.png" alt="WeekPeak" />
+  <img src="logo.png" alt="WeekPeak" onerror="this.style.display='none'" />
+  <button class="settings-btn" onclick="openSettings()" title="Settings">⚙️</button>
 </header>
 
-<!-- شاشة تسجيل الدخول -->
+<!-- Registration Screen -->
 <div id="auth-container">
-  <h2>✈️ أهلاً بيك في WeekPeak</h2>
-  <input type="text" id="name" placeholder="اسمك" />
-  <input type="email" id="email" placeholder="إيميلك" />
-  <input type="text" id="telegram" placeholder="يوزر تليجرام (@username)" />
-  <input type="password" id="password" placeholder="كلمة السر" />
-  <div id="map" style="height:200px; border-radius:8px; margin-bottom:16px; background:#3a1525; display:flex; align-items:center; justify-content:center; color:#aaa;">
-    🗺️ هنا هتحدد موقعك على الخريطة
-  </div>
-  <button onclick="handleAuth()">دخول / تسجيل</button>
+  <h2>✈️ Welcome to WeekPeak</h2>
+
+  <label>Full Name</label>
+  <input type="text" id="name" placeholder="Your name" />
+
+  <label>Email</label>
+  <input type="email" id="email" placeholder="your@email.com" />
+
+  <label>Telegram Username</label>
+  <input type="text" id="telegram" placeholder="@username" />
+  <p class="note">How to find your username: open Telegram → Settings → tap your name → copy the username that starts with @</p>
+
+  <label>Password</label>
+  <input type="password" id="password" placeholder="Choose a password" />
+
+  <label>Your Location</label>
+  <input type="text" id="city-search" placeholder="Type your city name..." oninput="searchCity(this.value)" />
+  <div id="map"></div>
+  <p class="map-note">📍 Type your city above or click on the map to pin your location</p>
+
+  <button onclick="handleAuth()">Get Started</button>
 </div>
 
-<!-- الشاشة الرئيسية -->
+<!-- Main App Screen -->
 <div id="app-container">
-  <h2>🏖️ عروض عطلة الأسبوع</h2>
-  <div id="loading">⏳ بندور على أرخص العروض...</div>
+  <h2>🏖️ Weekend Flight Deals</h2>
+  <div id="loading">⏳ Searching for the best deals...</div>
   <div id="flights-list"></div>
 </div>
 
-<script>
-function handleAuth() {
-  const name = document.getElementById('name').value;
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
+<!-- Settings Panel -->
+<div id="settings-panel">
+  <h2>⚙️ Settings</h2>
+  <label>Update Your Location</label>
+  <input type="text" id="settings-city-search" placeholder="Type your city name..." oninput="searchSettingsCity(this.value)" />
+  <div id="settings-map" style="height:220px; border-radius:8px; margin-bottom:8px; border:1px solid #7B2D42;"></div>
+  <p class="map-note">📍 Type your city or click on the map</p>
+  <button onclick="saveSettings()">Save Changes</button>
+  <button onclick="closeSettings()" style="background:#3a1525; margin-top:10px;">Cancel</button>
+</div>
 
-  if (!name || !email || !password) {
-    alert('من فضلك اكمل كل البيانات');
-    return;
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  // Main map
+  const map = L.map('map').setView([48.8566, 2.3522], 4);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+  let userLat = null, userLng = null, marker = null;
+
+  map.on('click', function(e) {
+    userLat = e.latlng.lat;
+    userLng = e.latlng.lng;
+    if (marker) marker.remove();
+    marker = L.marker([userLat, userLng]).addTo(map);
+  });
+
+  let searchTimeout;
+  function searchCity(query) {
+    clearTimeout(searchTimeout);
+    if (query.length < 3) return;
+    searchTimeout = setTimeout(async () => {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`);
+      const data = await res.json();
+      if (data.length > 0) {
+        userLat = parseFloat(data[0].lat);
+        userLng = parseFloat(data[0].lon);
+        map.setView([userLat, userLng], 10);
+        if (marker) marker.remove();
+        marker = L.marker([userLat, userLng]).addTo(map);
+      }
+    }, 600);
   }
 
-  // حفظ البيانات
-  localStorage.setItem('user', JSON.stringify({ name, email }));
+  // Settings map
+  let settingsMap = null, settingsMarker = null, settingsLat = null, settingsLng = null;
 
-  // إظهار التطبيق
-  document.getElementById('auth-container').style.display = 'none';
-  document.getElementById('app-container').style.display = 'block';
-}
+  function openSettings() {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    document.getElementById('app-container').style.display = 'none';
+    document.getElementById('settings-panel').style.display = 'block';
+    setTimeout(() => {
+      if (!settingsMap) {
+        settingsMap = L.map('settings-map').setView([user.lat || 48.8566, user.lng || 2.3522], 6);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(settingsMap);
+        settingsMap.on('click', function(e) {
+          settingsLat = e.latlng.lat;
+          settingsLng = e.latlng.lng;
+          if (settingsMarker) settingsMarker.remove();
+          settingsMarker = L.marker([settingsLat, settingsLng]).addTo(settingsMap);
+        });
+        if (user.lat) {
+          settingsMarker = L.marker([user.lat, user.lng]).addTo(settingsMap);
+        }
+      }
+    }, 100);
+  }
+
+  function searchSettingsCity(query) {
+    clearTimeout(searchTimeout);
+    if (query.length < 3) return;
+    searchTimeout = setTimeout(async () => {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`);
+      const data = await res.json();
+      if (data.length > 0) {
+        settingsLat = parseFloat(data[0].lat);
+        settingsLng = parseFloat(data[0].lon);
+        settingsMap.setView([settingsLat, settingsLng], 10);
+        if (settingsMarker) settingsMarker.remove();
+        settingsMarker = L.marker([settingsLat, settingsLng]).addTo(settingsMap);
+      }
+    }, 600);
+  }
+
+  function saveSettings() {
+    if (!settingsLat || !settingsLng) { alert('Please set your location'); return; }
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    user.lat = settingsLat;
+    user.lng = settingsLng;
+    localStorage.setItem('user', JSON.stringify(user));
+    closeSettings();
+  }
+
+  function closeSettings() {
+    document.getElementById('settings-panel').style.display = 'none';
+    document.getElementById('app-container').style.display = 'block';
+  }
+
+  function handleAuth() {
+    const name = document.getElementById('name').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
+    if (!name || !email || !password) { alert('Please fill in all required fields'); return; }
+    if (!userLat || !userLng) { alert('Please set your location on the map'); return; }
+    localStorage.setItem('user', JSON.stringify({ name, email, lat: userLat, lng: userLng }));
+    document.getElementById('auth-container').style.display = 'none';
+    document.getElementById('app-container').style.display = 'block';
+  }
+
+  // Check if already logged in
+  window.onload = function() {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    if (user.name && user.lat) {
+      document.getElementById('auth-container').style.display = 'none';
+      document.getElementById('app-container').style.display = 'block';
+    }
+  }
 </script>
 
 </body>
